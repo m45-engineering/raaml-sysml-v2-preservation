@@ -13,6 +13,12 @@ network service at runtime.
 
 ## Scope
 
+This checkout contains unreleased development version `0.2.0-dev.0`, with
+fact and manifest schema version `0.2.0`. The npm `next` release described
+below is the older signed candidate. Build this checkout to use the corrected
+native structure. See [the mapping notes](../docs/native-package-mapping-v0.2.md)
+for unsupported expressions, source exceptions, and validator warnings.
+
 The library:
 
 1. reads caller-supplied bytes for the 17 locked normative RAAML 1.1
@@ -85,6 +91,10 @@ The test processes all 17 source artifacts and requires:
 - the generated SysML v2 text to have the reference SHA-256;
 - all 17 artifacts to be reconstructed; and
 - facts extracted from the reconstructed XMI to equal the source facts.
+
+`forward` also returns `mappingNotes`, identifying preserved expressions and
+source relationships that are not emitted as executable/native relationships.
+These warnings do not mean that a formula has been implemented.
 
 Compile without running the tests:
 

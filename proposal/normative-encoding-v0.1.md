@@ -5,6 +5,11 @@
 **Intended license:** Creative Commons Attribution 4.0 International (CC BY 4.0), subject to a separate review of incorporated or redistributed third-party artifacts
 **Standing:** Independent community proposal; not an OMG specification, submission, or endorsement
 
+This document describes the v0.1 preservation proposal and signed-candidate
+evidence. The current development implementation's expanded native structure,
+schema v0.2 additions, and explicit limitations are documented in
+[native package mapping v0.2](../docs/native-package-mapping-v0.2.md).
+
 ## Introduction
 
 RAAML—the OMG Risk Analysis and Assessment Modeling Language—gives safety and reliability concepts a precise form that software can inspect. A hazard, unsafe control action, fault-tree gate, or assurance claim is not merely text on a diagram. It has a type, properties, and defined links to other parts of the system model. RAAML covers methods including STPA, FTA, FMEA, RBD, GSN, ISO 26262 analysis, and security analysis.

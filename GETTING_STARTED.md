@@ -9,6 +9,11 @@ This repository contains:
 - a reproducible test that checks whether the defined RAAML facts survive the
   complete round trip.
 
+**Looking for the actual SysML v2 packages?** Follow
+[Generate the RAAML packages for SysML v2](docs/generate-sysml-v2-packages.md).
+That guide creates a local `.sysml` file containing Core, General, RBD, and
+the other translated packages. The generated file is not included in Git.
+
 You do not need Python or Java on your computer to run the test. The
 recommended path uses Docker and runs the required tools inside a container.
 
@@ -119,7 +124,7 @@ A successful run ends with:
 
 ```text
 Independent reproduction passed.
-Canonical SHA-256: 5203f5704cf086e43605a36c10f4a00182e6d2c75a2584031a3d701514a33967
+Canonical SHA-256: 638ef422aee4a528d5de2a5bca8c7203a0b10ca5e6dfd552c45e76c8f76a7cbc
 Reviewer result: review-evidence/review-result.json
 Diagnostics: review-evidence/review-diagnostics.json
 ```
@@ -129,7 +134,7 @@ Open `review-evidence/review-result.json`. A passing result reports:
 - `"ok": true`;
 - 17 source artifacts and 17 reconstructed artifacts;
 - canonical SHA-256
-  `5203f5704cf086e43605a36c10f4a00182e6d2c75a2584031a3d701514a33967`;
+  `638ef422aee4a528d5de2a5bca8c7203a0b10ca5e6dfd552c45e76c8f76a7cbc`;
 - zero canonical fact differences;
 - zero SysML v1 validation errors;
 - zero SysML v2 validation errors; and

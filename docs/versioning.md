@@ -16,20 +16,23 @@ RAAML and does not mean “RAAML 0.9” or “RAAML 2.0.”
 ## Proposal and contract versions
 
 The written proposal and machine-readable contracts are independently
-versioned. The current proposal, fact contract, schemas, and preservation
-manifest format use version `0.1` or schema version `0.1.0`.
+versioned. The signed candidate uses proposal/fact contract `0.1` and schema
+version `0.1.0`. Current development raw facts, canonical facts, and manifests
+use `0.2.0`; their additions are documented in
+[native package mapping v0.2](native-package-mapping-v0.2.md). Other report and
+lock schemas retain their existing version numbers.
 
 A schema version describes the shape and meaning of a JSON document. It does
 not identify a Git commit or validation run.
 
 ## Implementation versions
 
-The Python CLI currently reports `0.1.0.dev0`. The TypeScript package candidate
-reports `0.1.0-rc.3`. These identify implementation lines, not versions of
-RAAML or the signed preservation-evidence state.
+The development Python CLI reports `0.2.0.dev0` and the development TypeScript
+package reports `0.2.0-dev.0`. These are unreleased implementation versions,
+not versions of RAAML or a new signed preservation-evidence state.
 
-The Python implementation is not published as a PyPI package. The TypeScript
-release candidate is published to npm under the `next` tag in the
+The Python implementation is not published as a PyPI package. The previous
+TypeScript release candidate `0.1.0-rc.3` is published under the `next` tag in the
 `@m45-engineering` organization scope. Cite both the package version and the
 corresponding signed Git candidate when referring to a tested implementation.
 

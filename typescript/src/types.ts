@@ -15,14 +15,14 @@ export interface StandardsLock extends JsonObject {
 }
 
 export interface RawRaamlFacts extends JsonObject {
-  readonly schemaVersion: "0.1.0";
+  readonly schemaVersion: "0.2.0";
   readonly documentKind: "raw-raaml-facts";
   readonly corpus: "raaml-1.1-definitions";
   readonly artifacts: JsonObject[];
 }
 
 export interface CanonicalRaamlFacts extends JsonObject {
-  readonly schemaVersion: "0.1.0";
+  readonly schemaVersion: "0.2.0";
   readonly documentKind: "canonical-raaml-facts";
   readonly corpus: "raaml-1.1-definitions";
   readonly artifacts: JsonObject[];

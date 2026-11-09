@@ -1,6 +1,6 @@
 {
   "name": "@m45-engineering/raaml-sysml-v2-preservation",
-  "version": "0.1.0-rc.3",
+  "version": "0.2.0-dev.0",
   "description": "A two-way mapping that preserves the defined canonical facts of the normative RAAML 1.1 definitions between SysML v1 and SysML v2.",
   "license": "Apache-2.0",
   "type": "module",

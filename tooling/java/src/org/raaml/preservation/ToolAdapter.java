@@ -171,8 +171,92 @@ public final class ToolAdapter {
         report.put("input", model.getFileName().toString());
         report.put("errorCategories", categories);
         report.put("diagnostics", diagnostics);
+        report.put("nativeStructure", nativeStructure(result));
         finalizeReport(report);
         return report;
+    }
+
+    private static Map<String, Object> nativeStructure(SysMLInteractiveResult result) {
+        Map<String, Object> elements = new java.util.TreeMap<>();
+        if (result.getRootElement() == null) {
+            return elements;
+        }
+        TreeIterator<EObject> iterator = result.getRootElement().eAllContents();
+        while (iterator.hasNext()) {
+            EObject object = iterator.next();
+            if (!(object instanceof org.omg.sysml.lang.sysml.Type type)) {
+                continue;
+            }
+            String name = unescapedQualifiedName(type);
+            if (type.getDeclaredName() == null || name == null
+                    || !name.startsWith("RaamlFullCorpus::")) {
+                continue;
+            }
+            Map<String, Object> description = new LinkedHashMap<>();
+            description.put("kind", type.eClass().getName());
+            description.put("abstract", type.isAbstract());
+            description.put("annotations", new ArrayList<String>());
+            description.put("supertypes", type.getOwnedSpecialization().stream()
+                .filter(relation -> relation.getGeneral() != null)
+                .map(relation -> unescapedQualifiedName(relation.getGeneral()))
+                .filter(java.util.Objects::nonNull).sorted().toList());
+            if (type instanceof org.omg.sysml.lang.sysml.Feature feature) {
+                description.put("types", feature.getType().stream()
+                    .map(ToolAdapter::unescapedQualifiedName)
+                    .filter(java.util.Objects::nonNull).sorted().toList());
+                description.put("ordered", feature.isOrdered());
+                description.put("unique", feature.isUnique());
+                description.put("derived", feature.isDerived());
+                for (org.omg.sysml.lang.sysml.Relationship relation : feature.getOwnedRelationship()) {
+                    if (relation instanceof org.omg.sysml.lang.sysml.FeatureValue value && value.isDefault()) {
+                        description.put("default", boundValue(value.getValue()));
+                    }
+                }
+                if (feature.getMultiplicity() instanceof org.omg.sysml.lang.sysml.MultiplicityRange range) {
+                    description.put("lower", boundValue(range.getBound().size() == 1 ? range.getUpperBound() : range.getLowerBound()));
+                    description.put("upper", boundValue(range.getUpperBound()));
+                }
+            }
+            elements.put(name, description);
+        }
+        iterator = result.getRootElement().eAllContents();
+        while (iterator.hasNext()) {
+            EObject object = iterator.next();
+            if (object instanceof org.omg.sysml.lang.sysml.MetadataFeature metadata
+                    && metadata.getMetaclass() != null) {
+                for (org.omg.sysml.lang.sysml.Element target : metadata.getAnnotatedElement()) {
+                    Object entry = elements.get(unescapedQualifiedName(target));
+                    if (entry instanceof Map<?, ?> record
+                            && record.get("annotations") instanceof List<?> list) {
+                        @SuppressWarnings("unchecked")
+                        List<String> annotations = (List<String>) list;
+                        annotations.add(unescapedQualifiedName(metadata.getMetaclass()));
+                        annotations.sort(String::compareTo);
+                    }
+                }
+            }
+        }
+        return elements;
+    }
+
+    private static String unescapedQualifiedName(org.omg.sysml.lang.sysml.Element element) {
+        List<String> names = new ArrayList<>();
+        for (org.omg.sysml.lang.sysml.Element cursor = element; cursor != null; cursor = cursor.getOwner()) {
+            if (cursor.getDeclaredName() != null) {
+                names.add(0, cursor.getDeclaredName());
+            }
+        }
+        return String.join("::", names);
+    }
+
+    private static String boundValue(org.omg.sysml.lang.sysml.Expression expression) {
+        if (expression instanceof org.omg.sysml.lang.sysml.LiteralInteger integer) {
+            return Integer.toString(integer.getValue());
+        }
+        if (expression instanceof org.omg.sysml.lang.sysml.LiteralInfinity) {
+            return "*";
+        }
+        return null;
     }
 
     private static String classifyV2Issue(Issue issue) {

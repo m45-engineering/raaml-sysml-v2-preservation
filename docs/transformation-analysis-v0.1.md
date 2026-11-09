@@ -2,6 +2,11 @@
 
 **Status:** Implemented and validated for signed candidate `v0.9.0-rc.3`
 
+This historical analysis records mapping decisions and the candidate's bounded
+preservation evidence. It is not proof that every listed native relationship
+was emitted by that candidate. The development correction and package-level
+checks are described in [native package mapping v0.2](native-package-mapping-v0.2.md).
+
 **Date started:** 2026-07-28
 
 ## Purpose

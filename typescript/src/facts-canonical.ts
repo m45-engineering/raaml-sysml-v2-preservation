@@ -483,6 +483,7 @@ function canonicalizeConnectors(
   for (const connector of connectors) {
     delete connector.sourceHandle;
     for (const end of connector.ends as RecordValue[]) {
+      end.propertyPath = end.propertyPath.map((reference: RecordValue) => canonicalReference(reference, filename, filenameToArtifact, sourceIndex, externalIndex));
       end.role = canonicalReference(
         end.role,
         filename,

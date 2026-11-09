@@ -407,7 +407,7 @@ def _representative_projection(
     rpn = _declaration(canonical, "FMEALib.xmi", "RPNCalculation")
     port = next(item for item in rpn["properties"] if item["name"] == "DET")
     fmea_item = _declaration(canonical, "FMEALib.xmi", "FMEAItem")
-    connector = fmea_item["connectors"][0]
+    connector = _detection_connector(fmea_item)
     undeveloped = _declaration(canonical, "GeneralRAAML.xmi", "Undeveloped")
     icon = undeveloped["icons"][0]
     situation = _declaration(canonical, "CoreRAAML.xmi", "Situation")
@@ -494,12 +494,22 @@ def _mutate_port(canonical: dict[str, object]) -> None:
 
 
 def _mutate_connector_order(canonical: dict[str, object]) -> None:
-    connector = _declaration(
+    connector = _detection_connector(_declaration(
         canonical,
         "FMEALib.xmi",
         "FMEAItem",
-    )["connectors"][0]
+    ))
     connector["ends"].reverse()
+
+
+def _detection_connector(declaration: dict[str, object]) -> dict[str, object]:
+    return next(
+        connector
+        for connector in declaration["connectors"]
+        if any(
+            end["role"]["target"].endswith("::Port::DET") for end in connector["ends"]
+        )
+    )
 
 
 def _mutate_icon(canonical: dict[str, object]) -> None:
