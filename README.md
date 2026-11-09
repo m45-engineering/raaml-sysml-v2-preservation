@@ -13,7 +13,16 @@ native SysML v2 use. Its narrower purpose is to preserve the normative RAAML
 1.1 definitions, and it does not claim support for arbitrary user-authored
 RAAML models.
 
-## Result
+## Development status
+
+The current development generators emit inheritance, properties, specialized
+definition kinds, and supported bindings in both Python and TypeScript.
+Package-level checks compare the validator's resolved model with source
+structure. Unevaluated constraints and unsupported source relationships are
+identified explicitly. See [native package mapping v0.2](docs/native-package-mapping-v0.2.md)
+for format changes, source exceptions, and remaining validator warnings.
+
+## Signed-candidate result
 
 The signed candidate `v0.9.0-rc.3` completes the full 17-file round trip with:
 
@@ -58,6 +67,8 @@ See the
 
 | Document | Purpose |
 | --- | --- |
+| [`docs/native-package-mapping-v0.2.md`](docs/native-package-mapping-v0.2.md) | Current structural mapping, validation scope, and explicit limitations |
+| [`docs/generate-sysml-v2-packages.md`](docs/generate-sysml-v2-packages.md) | Generate and open the actual SysML v2 packages locally, including Core, General, and RBD |
 | [`GETTING_STARTED.md`](GETTING_STARTED.md) | Exact first-time setup, reproduction, and integration instructions |
 | [`docs/python-cli-guide.md`](docs/python-cli-guide.md) | Use the Python reference CLI for extraction, mapping, reconstruction, and equality checking |
 | [`typescript/README.md`](typescript/README.md) | Use the preservation mapping directly from TypeScript or a Node.js application |
@@ -88,6 +99,11 @@ CI publishing mechanisms. It does not provide legal clearance or inspect
 artifacts retained by GitHub outside the Git repository.
 
 ## Reproduce the candidate
+
+These are the instructions for the historical signed candidate. Use a clean
+checkout of `v0.9.0-rc.3` for its exact results. For the current development
+packages and checks, follow [the generation guide](docs/generate-sysml-v2-packages.md)
+and [v0.2 mapping notes](docs/native-package-mapping-v0.2.md).
 
 Python 3.14.4 is the tested orchestration runtime. Only `sources fetch` uses
 the network.

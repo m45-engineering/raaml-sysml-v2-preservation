@@ -15,9 +15,11 @@ from .facts import (
     serialize_facts,
 )
 from .sources import load_lock
+from .v2 import NativeModel
 
 
 SCHEMA_VERSION = "0.1.0"
+MANIFEST_SCHEMA_VERSION = "0.2.0"
 SLICE_ID = "milestone-3-core-general-stpa"
 FULL_CORPUS_ID = "milestone-4-full-corpus"
 FULL_CORPUS_V2_FILENAME = "raaml-full-corpus.sysml"
@@ -102,7 +104,7 @@ def create_manifest(canonical_slice: dict[str, Any]) -> dict[str, Any]:
         "canonicalFacts": canonical_slice,
     }
     return {
-        "schemaVersion": SCHEMA_VERSION,
+        "schemaVersion": MANIFEST_SCHEMA_VERSION,
         "documentKind": "raaml-preservation-manifest",
         "payloadSha256": hashlib.sha256(canonical_json(payload)).hexdigest(),
         "payload": payload,
@@ -130,7 +132,7 @@ def create_full_corpus_manifest(
         "canonicalFacts": artifact_facts,
     }
     return {
-        "schemaVersion": SCHEMA_VERSION,
+        "schemaVersion": MANIFEST_SCHEMA_VERSION,
         "documentKind": "raaml-preservation-manifest",
         "payloadSha256": hashlib.sha256(canonical_json(payload)).hexdigest(),
         "payload": payload,
@@ -138,7 +140,7 @@ def create_full_corpus_manifest(
 
 
 def verify_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
-    if manifest.get("schemaVersion") != SCHEMA_VERSION:
+    if manifest.get("schemaVersion") != MANIFEST_SCHEMA_VERSION:
         raise RoundTripError("MANIFEST_VERSION", "unsupported manifest version")
     if manifest.get("documentKind") != "raaml-preservation-manifest":
         raise RoundTripError("MANIFEST_KIND", "unexpected manifest document kind")
@@ -162,7 +164,7 @@ def verify_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
 
 
 def verify_full_corpus_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
-    if manifest.get("schemaVersion") != SCHEMA_VERSION:
+    if manifest.get("schemaVersion") != MANIFEST_SCHEMA_VERSION:
         raise RoundTripError("MANIFEST_VERSION", "unsupported manifest version")
     if manifest.get("documentKind") != "raaml-preservation-manifest":
         raise RoundTripError("MANIFEST_KIND", "unexpected manifest document kind")
@@ -278,7 +280,7 @@ def _verify_qualified_native_targets(
         root_end = text.rfind("\n}")
         body_end = next_package if next_package >= 0 else root_end
         declaration = re.compile(
-            rf"^        {re.escape(carrier)} {re.escape(name)}(?:\s|;|\{{)",
+            rf"^        (?:abstract )?{re.escape(carrier)} {re.escape(name)}(?:\s|;|\{{)",
             re.MULTILINE,
         )
         if len(declaration.findall(text[body_start:body_end])) != 1:
@@ -615,12 +617,10 @@ def render_v2(facts: dict[str, Any]) -> str:
 
 
 def render_full_corpus_v2(facts: dict[str, Any]) -> str:
-    return _render_v2_model(
-        facts,
-        root_package="RaamlFullCorpus",
-        include_preservation_metadata=True,
-        include_scalar_import=True,
-    )
+    try:
+        return NativeModel(facts).render()
+    except ValueError as error:
+        raise RoundTripError("NATIVE_MAPPING", str(error)) from error
 
 
 def _render_v2_model(
@@ -707,6 +707,8 @@ def _native_targets(
     *,
     root_package: str | None = None,
 ) -> list[dict[str, str]]:
+    if root_package == "RaamlFullCorpus":
+        return NativeModel(facts).targets()
     targets = []
     for artifact in facts["artifacts"]:
         package_name = _identifier(Path(artifact["filename"]).stem)
@@ -885,9 +887,54 @@ def render_v1_artifact(
         owner_path = _package_path_for_canonical_id(artifact, declaration["id"])
         owner = package_nodes[owner_path]
         node = _append_declaration(owner, declaration, artifact, context)
-        _append_comments(node, declaration["comments"], artifact, context, declaration["id"])
+        _append_comments(
+            node, declaration["comments"], artifact, context, declaration["id"]
+        )
         for extension in declaration["extensions"]:
             _append_extension(owner, extension, artifact, context)
+    sysml_namespace = "http://www.omg.org/spec/SysML/20181001/SysML"
+    for declaration in artifact["declarations"]:
+        if declaration.get("sysmlKind"):
+            ET.SubElement(
+                root,
+                f"{{{sysml_namespace}}}{declaration['sysmlKind']}",
+                {
+                    XMI_ID: context.digest_id(declaration["id"], "sysmlKind"),
+                    "base_Class": context.ids[declaration["id"]],
+                },
+            )
+        for connector in declaration["connectors"]:
+            if connector.get("isBinding"):
+                ET.SubElement(
+                    root,
+                    f"{{{sysml_namespace}}}BindingConnector",
+                    {
+                        XMI_ID: context.digest_id(connector["id"], "binding"),
+                        "base_Connector": context.ids[connector["id"]],
+                    },
+                )
+            for ordinal, end in enumerate(connector["ends"], start=1):
+                if end.get("propertyPath"):
+                    ET.SubElement(
+                        root,
+                        f"{{{sysml_namespace}}}NestedConnectorEnd",
+                        {
+                            XMI_ID: context.digest_id(
+                                connector["id"], "nested", str(ordinal)
+                            ),
+                            "base_ConnectorEnd": context.owned_id(
+                                Path(artifact["filename"]).stem,
+                                connector["id"],
+                                "ConnectorEnd",
+                                "end",
+                                ordinal,
+                            ),
+                            "propertyPath": " ".join(
+                                context.reference_value(ref, artifact)
+                                for ref in end["propertyPath"]
+                            ),
+                        },
+                    )
     for namespace in artifact["namespaces"]:
         ET.SubElement(
             root,

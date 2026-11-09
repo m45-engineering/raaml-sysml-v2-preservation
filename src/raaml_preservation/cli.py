@@ -43,6 +43,7 @@ from .ocl_validation import validate_ocl_corpus
 from .publication import audit_repository
 from .release import ReleaseError, reproduce_release
 from .sources import LockError, fetch_sources, load_lock, verify_sources
+from .v2 import NativeModel, validate_native_structure
 from .transformation import (
     analyze_constraint_transformation_surface,
     analyze_corpus_transformation_surface,
@@ -380,6 +381,7 @@ def _forward_command(args: argparse.Namespace) -> int:
         if args.milestone_4:
             result = forward_full_corpus(REPOSITORY_ROOT, output_dir)
             manifest_paths = result["manifests"]
+            diagnostics.extend(NativeModel(result["facts"]).notes())
         else:
             result = forward_slice(REPOSITORY_ROOT, output_dir)
             manifest_paths = [result["manifest"]]
@@ -403,8 +405,11 @@ def _forward_command(args: argparse.Namespace) -> int:
     report = {
         "schemaVersion": "0.1.0",
         "command": "forward",
-        "ok": not diagnostics,
-        "summary": {"checked": 1, "failed": len(diagnostics)},
+        "ok": not any(item["severity"] == "error" for item in diagnostics),
+        "summary": {
+            "checked": 1,
+            "failed": sum(item["severity"] == "error" for item in diagnostics),
+        },
         "diagnostics": diagnostics,
     }
     _write_json_atomic(diagnostics_path, report)
@@ -1147,6 +1152,13 @@ def _tests_milestone_four(args: argparse.Namespace) -> int:
                 raise RoundTripError(
                     "FULL_CORPUS_V2_CATEGORY",
                     "a SysML v2 validation category is nonzero",
+                )
+            structural_errors = validate_native_structure(
+                first_result["facts"], v2_report["nativeStructure"]
+            )
+            if structural_errors:
+                raise RoundTripError(
+                    "FULL_CORPUS_STRUCTURE", "; ".join(structural_errors[:10])
                 )
             v2_text = first_result["v2"].read_text(encoding="utf-8")
             if "private import ScalarValues::*;" not in v2_text:

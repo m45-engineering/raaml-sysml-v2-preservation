@@ -11,7 +11,7 @@
     "payload"
   ],
   "properties": {
-    "schemaVersion": {"const": "0.1.0"},
+    "schemaVersion": {"const": "0.2.0"},
     "documentKind": {"const": "raaml-preservation-manifest"},
     "payloadSha256": {
       "type": "string",
@@ -35,6 +35,8 @@
           "enum": [
             "metadata def",
             "occurrence def",
+            "part def",
+            "attribute def",
             "connection def",
             "enum def",
             "constraint def"
@@ -58,6 +60,8 @@
           "enum": [
             "metadata def",
             "occurrence def",
+            "part def",
+            "attribute def",
             "connection def",
             "enum def",
             "constraint def"

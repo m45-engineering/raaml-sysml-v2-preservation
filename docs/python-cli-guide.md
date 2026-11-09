@@ -23,6 +23,10 @@ Git and must not be committed or attached to a public issue or release. See
 
 ## Requirements
 
+The current development mapping uses fact and manifest schema version `0.2.0`.
+See [native package mapping v0.2](native-package-mapping-v0.2.md) for structural
+coverage, explicit source exceptions, and validation commands.
+
 - Git
 - Python 3.14.4, as recorded in [`.python-version`](../.python-version)
 - an internet connection for `sources fetch`
@@ -139,8 +143,8 @@ A successful comparison contains:
   "summary": {
     "artifacts": 17,
     "differences": 0,
-    "reconstructedFactsSha256": "5203f5704cf086e43605a36c10f4a00182e6d2c75a2584031a3d701514a33967",
-    "sourceFactsSha256": "5203f5704cf086e43605a36c10f4a00182e6d2c75a2584031a3d701514a33967"
+    "reconstructedFactsSha256": "638ef422aee4a528d5de2a5bca8c7203a0b10ca5e6dfd552c45e76c8f76a7cbc",
+    "sourceFactsSha256": "638ef422aee4a528d5de2a5bca8c7203a0b10ca5e6dfd552c45e76c8f76a7cbc"
   }
 }
 ```

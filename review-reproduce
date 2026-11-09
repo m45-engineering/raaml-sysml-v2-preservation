@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-EXPECTED_CANONICAL_SHA256="5203f5704cf086e43605a36c10f4a00182e6d2c75a2584031a3d701514a33967"
+EXPECTED_CANONICAL_SHA256="638ef422aee4a528d5de2a5bca8c7203a0b10ca5e6dfd552c45e76c8f76a7cbc"
 IMAGE_NAME="raaml-preservation:independent-review"
 OUTPUT_DIR="review-evidence"
 

@@ -111,7 +111,7 @@ export function reverse(input: ReverseInput): ReverseResult {
   }
   artifacts.sort((left, right) => compare(left.artifactId, right.artifactId));
   const canonical: CanonicalRaamlFacts = {
-    schemaVersion: "0.1.0",
+    schemaVersion: "0.2.0",
     documentKind: "canonical-raaml-facts",
     corpus: "raaml-1.1-definitions",
     artifacts,
@@ -130,7 +130,7 @@ export function reverse(input: ReverseInput): ReverseResult {
 function verifyManifest(
   manifest: PreservationManifest,
 ): CanonicalRaamlFacts {
-  if (manifest.schemaVersion !== "0.1.0") {
+  if (manifest.schemaVersion !== "0.2.0") {
     fail("MANIFEST_VERSION", "unsupported manifest version");
   }
   if (manifest.documentKind !== "raaml-preservation-manifest") {
@@ -205,7 +205,7 @@ function verifyNativeTargets(payload: RecordValue, sysml: string): void {
       nextPackage >= 0 ? nextPackage : rootEnd,
     );
     const declaration = new RegExp(
-      `^        ${escapeRegex(carrier)} ${escapeRegex(name)}(?:\\s|;|\\{)`,
+      `^        (?:abstract )?${escapeRegex(carrier)} ${escapeRegex(name)}(?:\\s|;|\\{)`,
       "gm",
     );
     if ([...body.matchAll(declaration)].length !== 1) {
@@ -342,6 +342,27 @@ function renderV1Artifact(
     }
   }
 
+  root.attributes.set("xmlns:sysml", "http://www.omg.org/spec/SysML/20181001/SysML");
+  for (const declaration of artifact.declarations as RecordValue[]) {
+    if (declaration.sysmlKind) {
+      appendXml(root, `sysml:${declaration.sysmlKind}`, {
+        "xmi:id": context.digestId(declaration.id, "sysmlKind"),
+        base_Class: context.id(declaration.id),
+      });
+    }
+    for (const connector of declaration.connectors as RecordValue[]) {
+      if (connector.isBinding) appendXml(root, "sysml:BindingConnector", {
+        "xmi:id": context.digestId(connector.id, "binding"), "base_Connector": context.id(connector.id),
+      });
+      (connector.ends as RecordValue[]).forEach((end, index) => {
+        if (end.propertyPath?.length) appendXml(root, "sysml:NestedConnectorEnd", {
+          "xmi:id": context.digestId(connector.id, "nested", String(index + 1)),
+          "base_ConnectorEnd": context.ownedId(path.parse(artifact.filename).name, connector.id, "ConnectorEnd", "end", index + 1),
+          propertyPath: end.propertyPath.map((ref: RecordValue) => context.referenceValue(ref, artifact)).join(" "),
+        });
+      });
+    }
+  }
   for (const namespace of artifact.namespaces as RecordValue[]) {
     appendXml(root, "mofext:Tag", {
       "xmi:type": "mofext:Tag",

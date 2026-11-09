@@ -13,7 +13,7 @@ from .secure_xml import UnsafeXmlError, preflight_xml
 from .sources import load_lock, verify_sources
 
 
-SCHEMA_VERSION = "0.1.0"
+SCHEMA_VERSION = "0.2.0"
 CORPUS = "raaml-1.1-definitions"
 XMI_NAMESPACE = "http://www.omg.org/spec/XMI/20131001"
 XMI_ID = f"{{{XMI_NAMESPACE}}}id"
@@ -366,6 +366,15 @@ def _extract_artifact(path: Path, artifact: dict[str, Any]) -> dict[str, Any]:
         raise FactExtractionError("FACT_ROOT_EMPTY", f"{path.name}: empty XMI root")
     model = children[0]
     parent = {child: owner for owner in root.iter() for child in owner}
+    sysml_applications = {}
+    for application in children[1:]:
+        if not _namespace(application.tag).startswith("http://www.omg.org/spec/SysML/"):
+            continue
+        for key, value in application.attrib.items():
+            if key.startswith("base_"):
+                sysml_applications.setdefault(value, {})[
+                    _local_name(application.tag)
+                ] = application
     package_paths = _package_paths(model)
     packages = [
         _extract_package(element, package_paths[element])
@@ -373,7 +382,9 @@ def _extract_artifact(path: Path, artifact: dict[str, Any]) -> dict[str, Any]:
         if _is_package(element)
     ]
     declarations = [
-        _extract_declaration(element, package_paths[_owning_package(element, parent)])
+        _extract_declaration(
+            element, package_paths[_owning_package(element, parent)], sysml_applications
+        )
         for element in model.iter()
         if element.get(XMI_TYPE) in DECLARATION_TYPES
     ]
@@ -423,9 +434,7 @@ def _extract_artifact(path: Path, artifact: dict[str, Any]) -> dict[str, Any]:
             and element.get("value")
             and profile_uri
         ):
-            namespaces.append(
-                {"prefix": element.get("value"), "uri": profile_uri}
-            )
+            namespaces.append({"prefix": element.get("value"), "uri": profile_uri})
 
     applications = []
     for element in children[1:]:
@@ -461,6 +470,7 @@ def _extract_package(element: ET.Element, path: list[str]) -> dict[str, Any]:
 def _extract_declaration(
     element: ET.Element,
     package_path: list[str],
+    sysml_applications: dict[str, dict[str, ET.Element]],
 ) -> dict[str, Any]:
     kind = DECLARATION_TYPES[element.get(XMI_TYPE)]
     properties = [
@@ -476,6 +486,14 @@ def _extract_declaration(
     return {
         "sourceHandle": _source_handle(element),
         "kind": kind,
+        "sysmlKind": next(
+            (
+                name
+                for name in ("ConstraintBlock", "Block")
+                if name in sysml_applications.get(_source_handle(element), {})
+            ),
+            None,
+        ),
         "packagePath": package_path,
         "name": element.get("name"),
         "isAbstract": _presence_boolean(element, "isAbstract", False),
@@ -486,7 +504,7 @@ def _extract_declaration(
         "icons": _extract_icons(element),
         "constraints": _extract_constraints(element),
         "literals": _extract_literals(element),
-        "connectors": _extract_connectors(element),
+        "connectors": _extract_connectors(element, sysml_applications),
         "memberEnds": _references(element, "memberEnd"),
         "ownedEnds": owned_ends,
         "navigableOwnedEnds": _references(element, "navigableOwnedEnd"),
@@ -625,7 +643,9 @@ def _extract_literals(element: ET.Element) -> list[dict[str, Any]]:
     return literals
 
 
-def _extract_connectors(element: ET.Element) -> list[dict[str, Any]]:
+def _extract_connectors(
+    element: ET.Element, sysml_applications: dict[str, dict[str, ET.Element]]
+) -> list[dict[str, Any]]:
     connectors = []
     for child in element:
         if (
@@ -643,16 +663,32 @@ def _extract_connectors(element: ET.Element) -> list[dict[str, Any]]:
                     "FACT_CONNECTOR_ROLE",
                     "ConnectorEnd has no role",
                 )
+            nested = sysml_applications.get(_source_handle(end), {}).get(
+                "NestedConnectorEnd"
+            )
+            property_path = (
+                nested.get("propertyPath", "").split() if nested is not None else []
+            )
             ends.append(
                 {
                     "role": role,
                     "partWithPort": _single_reference(end, "partWithPort"),
+                    "propertyPath": [
+                        {
+                            "role": "propertyPath",
+                            "form": "attribute",
+                            "sourceValue": value,
+                        }
+                        for value in property_path
+                    ],
                 }
             )
         connectors.append(
             {
                 "sourceHandle": _source_handle(child),
                 "name": child.get("name"),
+                "isBinding": "BindingConnector"
+                in sysml_applications.get(_source_handle(child), {}),
                 "ends": ends,
                 "comments": _extract_comments(child),
             }
@@ -1263,6 +1299,16 @@ def _canonicalize_connectors(
     for connector in connectors:
         del connector["sourceHandle"]
         for end in connector["ends"]:
+            end["propertyPath"] = [
+                _canonical_reference(
+                    reference,
+                    filename,
+                    filename_to_artifact,
+                    source_index,
+                    external_index,
+                )
+                for reference in end["propertyPath"]
+            ]
             end["role"] = _canonical_reference(
                 end["role"],
                 filename,

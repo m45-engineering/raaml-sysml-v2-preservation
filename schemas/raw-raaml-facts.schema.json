@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schemaVersion", "documentKind", "corpus", "artifacts"],
   "properties": {
-    "schemaVersion": {"const": "0.1.0"},
+    "schemaVersion": {"const": "0.2.0"},
     "documentKind": {"const": "raw-raaml-facts"},
     "corpus": {"const": "raaml-1.1-definitions"},
     "artifacts": {
@@ -125,8 +125,9 @@
     "connectorEnd": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["role", "partWithPort"],
+      "required": ["role", "partWithPort", "propertyPath"],
       "properties": {
+        "propertyPath": {"type": "array", "items": {"$ref": "#/$defs/sourceReference"}},
         "role": {"$ref": "#/$defs/sourceReference"},
         "partWithPort": {
           "oneOf": [
@@ -139,8 +140,9 @@
     "connector": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sourceHandle", "name", "ends", "comments"],
+      "required": ["sourceHandle", "name", "ends", "comments", "isBinding"],
       "properties": {
+        "isBinding": {"type": "boolean"},
         "sourceHandle": {"$ref": "#/$defs/nonemptyString"},
         "name": {"$ref": "#/$defs/optionalName"},
         "ends": {
@@ -238,6 +240,7 @@
       "required": [
         "sourceHandle",
         "kind",
+        "sysmlKind",
         "packagePath",
         "name",
         "isAbstract",
@@ -254,6 +257,7 @@
         "navigableOwnedEnds"
       ],
       "properties": {
+        "sysmlKind": {"enum": [null, "Block", "ConstraintBlock"]},
         "sourceHandle": {"$ref": "#/$defs/nonemptyString"},
         "kind": {
           "enum": [

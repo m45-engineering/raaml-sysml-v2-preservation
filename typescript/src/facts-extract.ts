@@ -84,7 +84,7 @@ function extractRawFactsInternal(
   });
 
   return {
-    schemaVersion: "0.1.0",
+    schemaVersion: "0.2.0",
     documentKind: "raw-raaml-facts",
     corpus: CORPUS,
     artifacts: rawArtifacts,
@@ -109,6 +109,16 @@ function extractArtifact(
     );
   }
   const rootChildren = root.children;
+  const sysmlApplications = new Map<string, Map<string, XmlElement>>();
+  for (const application of rootChildren) {
+    if (!application.namespace.startsWith("http://www.omg.org/spec/SysML/")) continue;
+    for (const attr of application.attributes.values()) {
+      if (!attr.local.startsWith("base_")) continue;
+      const entries = sysmlApplications.get(attr.value) ?? new Map<string, XmlElement>();
+      entries.set(application.local, application);
+      sysmlApplications.set(attr.value, entries);
+    }
+  }
   const model = rootChildren[0];
   if (!model) {
     fail("FACT_ROOT_EMPTY", `${artifact.filename}: empty XMI root`);
@@ -131,6 +141,7 @@ function extractArtifact(
       extractDeclaration(
         element,
         requiredPath(paths, owningPackage(element, parent)),
+        sysmlApplications,
       ),
     );
   const declarationByHandle = new Map(
@@ -223,6 +234,7 @@ function extractPackage(element: XmlElement, path: string[]): RecordValue {
 function extractDeclaration(
   element: XmlElement,
   packagePath: string[],
+  sysmlApplications: Map<string, Map<string, XmlElement>>,
 ): RecordValue {
   const kind = declarationKind(element);
   if (!kind) {
@@ -231,6 +243,7 @@ function extractDeclaration(
   return {
     sourceHandle: sourceHandle(element),
     kind,
+    sysmlKind: ["ConstraintBlock", "Block"].find((name) => sysmlApplications.get(sourceHandle(element))?.has(name)) ?? null,
     packagePath,
     name: attribute(element, "name") ?? null,
     isAbstract: presenceBoolean(element, "isAbstract", false),
@@ -241,7 +254,7 @@ function extractDeclaration(
     icons: extractIcons(element),
     constraints: extractConstraints(element),
     literals: extractLiterals(element),
-    connectors: extractConnectors(element),
+    connectors: extractConnectors(element, sysmlApplications),
     memberEnds: references(element, "memberEnd"),
     ownedEnds: children(element, "ownedEnd").map(extractProperty),
     navigableOwnedEnds: references(element, "navigableOwnedEnd"),
@@ -335,12 +348,13 @@ function extractLiterals(element: XmlElement): RecordValue[] {
   }));
 }
 
-function extractConnectors(element: XmlElement): RecordValue[] {
+function extractConnectors(element: XmlElement, sysmlApplications: Map<string, Map<string, XmlElement>>): RecordValue[] {
   return children(element, "ownedConnector")
     .filter((connector) => xmiType(connector) === "uml:Connector")
     .map((connector) => ({
       sourceHandle: sourceHandle(connector),
       name: attribute(connector, "name") ?? null,
+      isBinding: sysmlApplications.get(sourceHandle(connector))?.has("BindingConnector") ?? false,
       ends: children(connector, "end").map((end) => {
         const role = singleReference(end, "role");
         if (!role) {
@@ -349,6 +363,7 @@ function extractConnectors(element: XmlElement): RecordValue[] {
         return {
           role,
           partWithPort: singleReference(end, "partWithPort"),
+          propertyPath: (attribute(sysmlApplications.get(sourceHandle(end))?.get("NestedConnectorEnd") ?? end, "propertyPath") ?? "").split(/\s+/).filter(Boolean).map((value) => ({role: "propertyPath", form: "attribute", sourceValue: value})),
         };
       }),
       comments: extractComments(connector),

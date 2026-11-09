@@ -99,9 +99,9 @@ class MilestoneFourForwardTests(unittest.TestCase):
         self.assertIn("package RaamlFullCorpus {", text)
         self.assertIn("private import ScalarValues::*;", text)
         self.assertIn("metadata def Raaml_BaseAnnotation;", text)
-        self.assertIn("#RaamlFullCorpus::Raaml_LibraryClass", text)
-        self.assertIn("#RaamlFullCorpus::Raaml_LibraryAssociation", text)
-        self.assertIn("#RaamlFullCorpus::Raaml_AssociationClass", text)
+        self.assertIn("occurrence def InSeries :> RBDLib::SystemReliabilitySituation", text)
+        self.assertIn("constraint def InSeriesCalculation {", text)
+        self.assertIn("UNIMPLEMENTED source expression", text)
         self.assertEqual(
             sum(
                 len(artifact["declarations"])

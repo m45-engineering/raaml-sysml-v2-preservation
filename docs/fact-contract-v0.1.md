@@ -2,6 +2,11 @@
 
 **Status:** Implemented and validated for signed candidate `v0.9.0-rc.3`
 
+This is the historical v0.1 contract. Current development adds the v0.2 source
+selectors and connector paths documented in
+[native package mapping v0.2](native-package-mapping-v0.2.md), while retaining
+the facts listed here.
+
 **Corpus:** the 17 artifacts in the `raaml-1.1-definitions` collection of
 `standards.lock.json`
 
