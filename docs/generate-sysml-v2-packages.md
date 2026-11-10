@@ -1,7 +1,7 @@
 # Generate the RAAML packages for SysML v2
 
-Follow these steps to generate the SysML v2 definitions for **Core, General,
-and RBD** on your own computer.
+Follow these steps to generate **all 17 RAAML packages** as SysML v2
+definitions on your own computer, including Core, General, and RBD.
 
 The result is one file, `raaml-full-corpus.sysml`, containing all 17 translated
 RAAML packages. You can open it in a text editor or a SysML v2 modeling tool.
@@ -95,9 +95,10 @@ Copy this entire command as one line:
 python3 raaml forward --milestone-4 --output-dir generated/packages --diagnostics generated/packages-diagnostics.json
 ```
 
-`--milestone-4` selects the complete 17-file RAAML definition corpus, including
-Core, General, and RBD. The command reads the official inputs, extracts their
-model definitions, and writes the SysML v2 representation.
+`--milestone-4` selects all 17 official RAAML definition files. The command
+translates their model definitions and writes **all 17 packages** to one file:
+`generated/packages/raaml-full-corpus.sysml`. Core, General, and RBD are included
+alongside the other RAAML packages; no separate generation commands are needed.
 
 The command can finish without printing anything. Open
 `generated/packages-diagnostics.json` in a text editor and check that it
@@ -115,18 +116,48 @@ generated/packages/raaml-full-corpus.sysml
 ```
 
 **This is the actual generated SysML v2 model.** It now exists on your computer;
-it is not a file downloaded from GitHub. Its package structure includes:
+it is not a file downloaded from GitHub. The outer package, `RaamlFullCorpus`,
+contains all 17 packages listed below in alphabetical order. Names ending in
+`Lib` contain reusable library definitions; the other packages contain translated
+profile definitions, including annotations for model elements.
 
-```text
-RaamlFullCorpus
-├── CoreRAAML
-├── CoreRAAMLLib
-├── GeneralRAAML
-├── GeneralRAAMLLib
-├── RBD
-├── RBDLib
-└── other RAAML packages
-```
+- **`CoreRAAML`** defines the shared annotations for situations, controlling
+  measures, identifiers, relevance, and violations.
+- **`CoreRAAMLLib`** defines the basic situation and causality types used by the
+  other libraries.
+- **`FMEA`** defines the annotation for an item in a Failure Mode and Effects
+  Analysis.
+- **`FMEALib`** defines reusable analysis items, functional failure modes, and the
+  source risk-priority-number calculation.
+- **`FTA`** defines Fault Tree Analysis annotations for trees, events, gates, and
+  transfers between trees.
+- **`FTALib`** defines reusable fault-tree events, gates, connections, and source
+  probability calculations.
+- **`GeneralRAAML`** defines annotations for common safety concepts, including
+  hazards, faults, failure modes, detection, prevention, and mitigation.
+- **`GeneralRAAMLLib`** defines reusable types for hazards, causes, effects,
+  losses, failure modes, and risk scenarios.
+- **`GeneralRAAMLSecurity`** defines annotations for security assets, actors,
+  threats, and their relationships.
+- **`GeneralRAAMLSecurityLib`** defines reusable threat, vulnerability, and
+  weakness types.
+- **`GSN`** defines Goal Structuring Notation annotations for assurance arguments,
+  including goals, strategies, evidence, context, assumptions, and justifications.
+- **`ISO26262`** defines automotive functional-safety annotations for safety
+  goals, requirements, risk assessments, and safety integrity levels.
+- **`ISO26262Lib`** defines reusable automotive situations, malfunctions, hazardous
+  events, and severity, exposure, and controllability classifications.
+- **`RBD`** defines Reliability Block Diagram annotations for component and system
+  reliability, series and parallel arrangements, and redundancy.
+- **`RBDLib`** defines reusable reliability configurations, probability
+  distributions, and source calculation definitions.
+- **`STPA`** defines System-Theoretic Process Analysis annotations for control
+  structures, controllers, control actions, feedback, and loss scenarios.
+- **`STPALib`** defines reusable loss scenarios, undesired control actions,
+  process-model flaws, and their causal relationships.
+
+The source calculations listed above are preserved definitions; they are not
+executed by the generated SysML v2 model.
 
 Use your editor's Find command to locate `package CoreRAAML {`,
 `package GeneralRAAML {`, or `package RBDLib {`. RBD definitions include
